@@ -1,0 +1,4 @@
+repo/
+weights/
+nomad.pth
+__pycache__/
