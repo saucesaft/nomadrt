@@ -1,0 +1,19 @@
+version: '3'
+services:
+  nomadrt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${CONTAINER_USER:-sauce} # Use the environment variable or default to 'sauce'
+    network_mode: "host"  # equivalent to --net=host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - CONTAINER_USER=${CONTAINER_USER:-sauce} # Pass the username as an environment variable
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - $HOME/.Xauthority:/dot.Xauthority:rw
+      - .:/home/${CONTAINER_USER:-sauce}/workspace # Mount the current directory to /home/$CONTAINER_USER/workspace
+    stdin_open: true  # equivalent to -i
+    tty: true         # equivalent to -t
+    command: /bin/bash  # This gives you an interactive shell when you start the container
