@@ -1,4 +1,9 @@
 repo/
-weights/
+weights/*.onnx
+weights/*.engine
 nomad.pth
 __pycache__/
+build/
+install/
+log/
+dashcam.mp4

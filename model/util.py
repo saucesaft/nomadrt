@@ -12,27 +12,6 @@ def load_model(model_path, config):
     model = load_nomad_model(model_path, config)
     return model
 
-
-def load_vint_model(model_path, config):
-
-    model = ViNT(
-        context_size=config["context_size"],
-        len_traj_pred=config["len_traj_pred"],
-        learn_angle=config["learn_angle"],
-        obs_encoder=config["obs_encoder"],
-        obs_encoding_size=config["obs_encoding_size"],
-        late_fusion=config["late_fusion"],
-        mha_num_attention_heads=config["mha_num_attention_heads"],
-        mha_num_attention_layers=config["mha_num_attention_layers"],
-        mha_ff_dim_factor=config["mha_ff_dim_factor"],
-    )
-
-    ckpt = torch.load(model_path)
-    load_checkpoint(model, ckpt)
-
-    return model
-
-
 def load_nomad_model(model_path, config):
     nomad = NoMaDDiffuser(config)
 
@@ -40,38 +19,6 @@ def load_nomad_model(model_path, config):
     load_checkpoint(nomad, ckpt)
 
     return nomad
-
-
-def load_gnm_model(model_path, config):
-    model = GNM(config["context_size"],
-                config["len_traj_pred"],
-                config["learn_angle"],
-                config["obs_encoding_size"],
-                config["goal_encoding_size"])
-    ckpt = torch.load(model_path, map_location="cuda:0")
-    load_checkpoint(model, ckpt)
-    return model
-
-
-def load_vae_model(model_path, config):
-    model = WaypointVAEGNM(config["context_size"],
-                           config["obs_encoding_size"],
-                           config["goal_encoding_size"],
-                           config["latent_dim"],
-                           config["len_traj_pred"],
-                           config["learn_angle"])
-
-    ckpt = torch.load(model_path)
-    load_checkpoint(model, ckpt)
-    return model
-
-
-def load_mdn_model(model_path, config):
-    model = MDN()
-    ckpt = torch.load(model_path)
-    load_checkpoint(model, ckpt)
-    return model
-
 
 def load_checkpoint(model, ckpt):
     if "state_dict" in ckpt:
@@ -109,7 +56,7 @@ def convert_to_onnx(input_model_path, output_model_path, config):
     if config['model_type'] == 'nomad':
         # Create directory for models, fail if exists
         output_folder = Path(output_model_path)
-        output_folder.mkdir(parents=True, exist_ok=False)
+        output_folder.mkdir(parents=True, exist_ok=True)
 
         # NoMaD model has to broken up as diffusion step does has poor performance if converted to ONNX
         mask = torch.zeros(1).long().to(obs_img_tensor.device)

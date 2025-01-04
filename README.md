@@ -8,9 +8,15 @@ python onnx_export.py -i nomad.pth -t config/nomad.yaml -o weights
 
 ### convert onnx models to tensorrt's engine
 ```bash
+cd weights
 trtexec --onnx=action.onnx --best --useCudaGraph --saveEngine=action.engine
 trtexec --onnx=encoder.onnx --best --useCudaGraph --saveEngine=encoder.engine
 trtexec --onnx=distance.onnx --best --useCudaGraph --saveEngine=distance.engine
+```
+
+### compile the ros2 package
+```bash
+colcon build --symlink-install
 ```
 
 ## special thanks
