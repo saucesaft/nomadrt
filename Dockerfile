@@ -23,7 +23,7 @@ RUN ln -s /dot.Xauthority /home/${USERNAME}/.Xauthority
 RUN pip install --upgrade pip
 RUN pip install torch
 RUN pip install diffusers einops efficientnet_pytorch onnx
-RUN pip install hydra-core omegaconf dill
+RUN pip install hydra-core omegaconf dill pycuda
 
 # clone the diffusion policy repo and install it
 WORKDIR /home/${USERNAME}
