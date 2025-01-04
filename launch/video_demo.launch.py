@@ -15,6 +15,8 @@ def generate_launch_description():
 
     weights_folder = os.path.join(package_path, 'share', package_name, 'weights')
 
+    print(weights_folder)
+
     return LaunchDescription([
 
         Node(
@@ -30,9 +32,7 @@ def generate_launch_description():
             executable='receiver_node.py',
             name='receive_video',
             parameters=[
-                {"action_path": os.path.join(weights_folder, 'action.engine') },
-                {"encoder_path": os.path.join(weights_folder, 'encoder.engine') },
-                {"distance_path": os.path.join(weights_folder, 'distance.engine') }
+                {"model_path": weights_folder }
             ]
         )
 

@@ -1,20 +1,26 @@
+# io deps
+import os
+
 # ml deps
 import tensorrt as trt
 from nomadrt.encoder_trt import EncoderModuleTRT
+from nomadrt.model.noise_scheduler import DDPMScheduler
+from nomadrt.model.nomad_util import get_action
 
 class NomadTRT:
-    def __init__(self, model_path, num_samples=10, len_traj_pred=8, num_diffusion_iters=10):
+    def __init__(self, model_path, logger, num_samples=10, len_traj_pred=8, num_diffusion_iters=10):
         self.num_samples = num_samples
         self.len_traj_pred = len_traj_pred
         self.num_diffusion_iters = num_diffusion_iters
 
-        self.encoder_session = create_onnx_session(f"{model_path}/encoder.onnx")
-        self.dist_session = create_onnx_session(f"{model_path}/distance.onnx")
-        self.action_session = create_onnx_session(f"{model_path}/action.onnx")
+        self.ros_logger = logger
+
+        self.encoder_session = EncoderModuleTRT( os.path.join(model_path, 'encoder.engine'), self.ros_logger )
+        # self.dist_session = ...
+        # self.action_session = ...
 
         self.noise_scheduler = DDPMScheduler(
             num_train_timesteps=self.num_diffusion_iters,
-
         )
 
     def predict(self, obs_tensor, goal_tensor):
@@ -67,12 +73,3 @@ class NomadTRT:
             )
         predicted_actions = get_action(naction).squeeze()
         return predicted_actions
-
-
-def create_onnx_session(model_path):
-    session = ort.InferenceSession(
-        model_path,
-        providers=[("CUDAExecutionProvider", {"cudnn_conv_algo_search": "DEFAULT"}), "CPUExecutionProvider"]
-    )
-    return session
-

@@ -1,12 +1,16 @@
-import tensorrt as trt
 import numpy as np
 import pycuda.driver as cuda
 import pycuda.autoinit
+import tensorrt as trt
 
 class EncoderModuleTRT:
-    def __init__(self, engine_file_path):
+    def __init__(self, engine_file_path, logger):
+
+        self.ros_logger = logger
+        
         self.logger = trt.Logger(trt.Logger.WARNING)
         self.runtime = trt.Runtime(self.logger)
+        trt.init_libnvinfer_plugins(self.logger, "")
 
         # Load the TensorRT engine
         self.engine = self._load_engine(engine_file_path)
@@ -55,13 +59,3 @@ class EncoderModuleTRT:
         self.stream.synchronize()
 
         return np.array(self.outputs[0]["host"])
-
-# Usage
-engine_path = "model.engine"  # Replace with your engine file path
-model = TensorRTInference(engine_path)
-
-# Prepare input data
-input_data = np.random.rand(1, 3, 224, 224).astype(np.float32)  # Replace with your input shape
-output = model.infer(input_data)
-
-print("Inference Output:", output)

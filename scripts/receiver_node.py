@@ -16,6 +16,10 @@ class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('receiver')
         
+        self.declare_parameter('model_path', 'weights')
+
+        self.model = NomadTRT( self.get_parameter('model_path').get_parameter_value().string_value, self.get_logger() )
+
         self.subscription = self.create_subscription(
             Image,
             '/camera/image_raw',  # Replace with the appropriate topic name
@@ -42,8 +46,6 @@ class ImageSubscriber(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ImageSubscriber()
-
-    model = NomadTRT()
 
     try:
         rclpy.spin(node)

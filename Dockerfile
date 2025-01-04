@@ -24,9 +24,11 @@ RUN pip install --upgrade pip
 RUN pip install torch
 RUN pip install diffusers einops efficientnet_pytorch onnx
 RUN pip install hydra-core omegaconf dill pycuda
+RUN pip install numpy<=1.23
 
 # clone the diffusion policy repo and install it
 WORKDIR /home/${USERNAME}
+RUN git config --global http.postBuffer 1048576000
 RUN git clone https://github.com/real-stanford/diffusion_policy
 RUN pip install -e ./diffusion_policy
 
