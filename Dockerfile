@@ -22,9 +22,7 @@ RUN ln -s /dot.Xauthority /home/${USERNAME}/.Xauthority
 # install dependencies
 RUN pip install --upgrade pip
 RUN pip install torch
-RUN pip install diffusers einops efficientnet_pytorch onnx
-RUN pip install hydra-core omegaconf dill pycuda
-RUN pip install numpy<=1.23
+RUN pip install diffusers einops efficientnet_pytorch onnx hydra-core omegaconf dill pycuda "numpy<=1.23"
 
 # clone the diffusion policy repo and install it
 WORKDIR /home/${USERNAME}
@@ -34,3 +32,6 @@ RUN pip install -e ./diffusion_policy
 
 # go back to the workspace folder
 WORKDIR /home/${USERNAME}/workspace
+
+# testing purposes
+RUN pip install notebook

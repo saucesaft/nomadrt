@@ -2,8 +2,10 @@ import numpy as np
 import pycuda.driver as cuda
 import pycuda.autoinit
 import tensorrt as trt
+from nomadrt.model.noise_scheduler import DDPMScheduler
+from nomadrt.model.nomad_util import get_action
 
-class EncoderModuleTRT:
+class ActionModuleTRT:
     def __init__(self, engine_file_path, config):
 
         self.config = config
@@ -16,6 +18,11 @@ class EncoderModuleTRT:
         # load the TensorRT engine
         self.engine = self._load_engine(engine_file_path)
         self.context = self.engine.create_execution_context()
+
+        # setup the noise scheduler
+        self.noise_scheduler = DDPMScheduler(
+            num_train_timesteps=self.config['num_diffusion_iters'],
+        )
 
         # allocate memory for inputs and outputs
         self.inputs, self.outputs, self.bindings, self.stream = self._allocate_buffers()
@@ -60,34 +67,49 @@ class EncoderModuleTRT:
 
         return inputs, outputs, bindings, stream
 
-    def encode_features(self, obs, goal, mask):
-        # copy input data to the device
-        np.copyto(self.inputs['obs_img']["host"], obs.ravel())
-        cuda.memcpy_htod_async(
-            self.inputs['obs_img']["device"],
-            self.inputs['obs_img']["host"],
-            self.stream
-        )
+    def predict_actions(self, vision_features):
 
-        np.copyto(self.inputs['goal_img']["host"], goal.ravel())
-        cuda.memcpy_htod_async(
-            self.inputs['goal_img']["device"],
-            self.inputs['goal_img']["host"],
-            self.stream
-        )
+        naction = np.random.randn(self.config['num_samples'], self.config['len_traj_pred'], 2).astype(np.float32)
+        self.noise_scheduler.set_timesteps(self.config['num_diffusion_iters'])
 
-        np.copyto(self.inputs['input_goal_mask']["host"], mask.ravel())
-        cuda.memcpy_htod_async(
-            self.inputs['input_goal_mask']["device"],
-            self.inputs['input_goal_mask']["host"],
-            self.stream
-        )
+        for k in self.noise_scheduler.timesteps[:]:
 
-        # run inference
-        self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.handle)
+            # copy input data to the device
+            np.copyto(self.inputs['sample']["host"], naction.ravel() )
+            cuda.memcpy_htod_async(
+                self.inputs['sample']["device"],
+                self.inputs['sample']["host"],
+                self.stream
+            )
 
-        # copy output data back to the host
-        cuda.memcpy_dtoh_async(self.outputs['4022']["host"], self.outputs['4022']["device"], self.stream)
-        self.stream.synchronize()
+            np.copyto(self.inputs['timestep']["host"], np.array(k).ravel() )
+            cuda.memcpy_htod_async(
+                self.inputs['timestep']["device"],
+                self.inputs['timestep']["host"],
+                self.stream
+            )
 
-        return np.array(self.outputs['4022']["host"])
+            np.copyto(self.inputs['global_cond']["host"], vision_features.ravel() )
+            cuda.memcpy_htod_async(
+                self.inputs['global_cond']["device"],
+                self.inputs['global_cond']["host"],
+                self.stream
+            )
+
+            # run inference
+            self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.handle)
+
+            # copy output data back to the host
+            cuda.memcpy_dtoh_async(self.outputs['779']["host"], self.outputs['779']["device"], self.stream)
+            self.stream.synchronize()
+
+            noise_pred = np.array(self.outputs['779']["host"])
+
+            # remove noise
+            naction = self.noise_scheduler.step(
+                model_output=noise_pred.reshape((10, 8, 2)),
+                timestep=k,
+                sample=naction
+            )
+
+        return get_action(naction).squeeze()

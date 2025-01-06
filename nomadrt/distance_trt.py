@@ -2,13 +2,15 @@ import numpy as np
 import pycuda.driver as cuda
 import pycuda.autoinit
 import tensorrt as trt
+from nomadrt.model.noise_scheduler import DDPMScheduler
+from nomadrt.model.nomad_util import get_action
 
-class EncoderModuleTRT:
+class DistanceModuleTRT:
     def __init__(self, engine_file_path, config):
 
         self.config = config
         self.ros_logger = config['logger']
-
+        
         self.logger = trt.Logger(trt.Logger.WARNING)
         self.runtime = trt.Runtime(self.logger)
         trt.init_libnvinfer_plugins(self.logger, "")
@@ -60,26 +62,13 @@ class EncoderModuleTRT:
 
         return inputs, outputs, bindings, stream
 
-    def encode_features(self, obs, goal, mask):
+    def predict_distance(self, vision_features):
+
         # copy input data to the device
-        np.copyto(self.inputs['obs_img']["host"], obs.ravel())
+        np.copyto(self.inputs['vision_features']["host"], vision_features.ravel() )
         cuda.memcpy_htod_async(
-            self.inputs['obs_img']["device"],
-            self.inputs['obs_img']["host"],
-            self.stream
-        )
-
-        np.copyto(self.inputs['goal_img']["host"], goal.ravel())
-        cuda.memcpy_htod_async(
-            self.inputs['goal_img']["device"],
-            self.inputs['goal_img']["host"],
-            self.stream
-        )
-
-        np.copyto(self.inputs['input_goal_mask']["host"], mask.ravel())
-        cuda.memcpy_htod_async(
-            self.inputs['input_goal_mask']["device"],
-            self.inputs['input_goal_mask']["host"],
+            self.inputs['vision_features']["device"],
+            self.inputs['vision_features']["host"],
             self.stream
         )
 
@@ -87,7 +76,7 @@ class EncoderModuleTRT:
         self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.handle)
 
         # copy output data back to the host
-        cuda.memcpy_dtoh_async(self.outputs['4022']["host"], self.outputs['4022']["device"], self.stream)
+        cuda.memcpy_dtoh_async(self.outputs['13']["host"], self.outputs['13']["device"], self.stream)
         self.stream.synchronize()
 
-        return np.array(self.outputs['4022']["host"])
+        return np.array(self.outputs['13']["host"])

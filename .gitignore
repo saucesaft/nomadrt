@@ -6,4 +6,5 @@ __pycache__/
 build/
 install/
 log/
-dashcam.mp4
+*.mp4
+.ipynb_checkpoints/
