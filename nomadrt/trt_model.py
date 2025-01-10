@@ -8,7 +8,6 @@ import tensorrt as trt
 from nomadrt.encoder_trt import EncoderModuleTRT
 from nomadrt.action_trt import ActionModuleTRT
 from nomadrt.distance_trt import DistanceModuleTRT
-from nomadrt.model.noise_scheduler import DDPMScheduler
 from nomadrt.model.nomad_util import get_action
 
 class NomadTRT:
@@ -27,12 +26,8 @@ class NomadTRT:
         self.dist_session = DistanceModuleTRT( os.path.join(model_path, 'distance.engine'), self.config )
         self.action_session = ActionModuleTRT( os.path.join(model_path, 'action.engine'), self.config )
 
-        self.noise_scheduler = DDPMScheduler(
-            num_train_timesteps=self.num_diffusion_iters,
-        )
-
-    def predict(self, obs, goal):
-        vision_features = self.encoder_session.encode_features(obs, goal)
+    def predict(self, obs, goal, mask):
+        vision_features = self.encoder_session.encode_features(obs, goal, mask)
         predicted_distance = self.dist_session.predict_distance(vision_features)
         predicted_actions = self.action_session.predict_actions(vision_features)
         return predicted_distance, predicted_actions

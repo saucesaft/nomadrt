@@ -35,3 +35,4 @@ WORKDIR /home/${USERNAME}/workspace
 
 # testing purposes
 RUN pip install notebook
+# RUN export PATH=$PATH:/home/${USERNAME}/.local/bin/

@@ -1,5 +1,5 @@
 ## nomadrt (real time)
-implementation of NoMAD with tensorrt for running on edge devices.
+implementation of NoMAD with tensorrt for running on edge devices. tested to be around 6x faster than the pytorch code.
 
 ### convert from pytorch to onnx
 ```bash
@@ -17,6 +17,11 @@ trtexec --onnx=distance.onnx --best --useCudaGraph --saveEngine=distance.engine
 ### compile the ros2 package
 ```bash
 colcon build --symlink-install
+```
+
+### launch the demo node
+```bash
+ros2 launch nomadrt video_demo.launch.py
 ```
 
 ## special thanks

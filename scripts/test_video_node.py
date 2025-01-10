@@ -56,7 +56,7 @@ class VideoPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    video_file = 'dashcam.mp4'  # Replace with the path to your video file
+    video_file = 'dashcam.webm'  # Replace with the path to your video file
     node = VideoPublisher(video_file)
 
     try:

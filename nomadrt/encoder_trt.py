@@ -90,4 +90,6 @@ class EncoderModuleTRT:
         cuda.memcpy_dtoh_async(self.outputs['4022']["host"], self.outputs['4022']["device"], self.stream)
         self.stream.synchronize()
 
-        return np.array(self.outputs['4022']["host"])
+        features = np.array(self.outputs['4022']["host"])
+
+        return np.repeat(features, repeats=self.config['num_samples'], axis=0)

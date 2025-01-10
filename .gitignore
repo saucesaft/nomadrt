@@ -7,4 +7,5 @@ build/
 install/
 log/
 *.mp4
+*.webm
 .ipynb_checkpoints/
